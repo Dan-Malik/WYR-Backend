@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
+
+//Model
 let User = require('../models/user');
 
 
@@ -13,8 +17,11 @@ router.post('/', (req, res) => {
     }
 
     User.findOne({ email: req.body.email }).then(user => {
+
+
         if (user) {
-            return res.status(400).send({ message: "User with that email already exists!" });
+
+            return res.status(400).send({ message: "User with that email already exists." });
         }
 
         //Password salt and hash
@@ -38,21 +45,25 @@ router.post('/', (req, res) => {
                 newUser.save(function (err, user) {
                     if (err) {
                         console.log(err);
-                        return res.status(400).send({ message: "Error creating new user!" });
+                        return res.status(400).send({ message: "Error creating new user." });
                     }
+                    
+                    jwt.sign({id: user.id}, process.env.JWT_SECRET, {expiresIn: 4800}, (err, token)=>{
 
-                    console.log(`New user created: ${user.username}, ${user.email}`)
-                    res.status(200).send({ message: `New user created: ${user.username}, ${user.email}` });
+                        if (err) {
+                            console.log(err);
+                            return res.status(400).send({ message: "Error generating new token." });
+                        }
+
+                        console.log(`New user created: ${user.username}, ${user.email}`)
+                        res.status(200).json({ token, new_user: {id: user.id, username: user.username, email: user.email} });
+
+                    })
+
                 });
 
             })
         });
-
-
-
-
-
-
     })
 
 

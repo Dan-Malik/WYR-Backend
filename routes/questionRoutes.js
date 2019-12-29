@@ -1,11 +1,16 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
+//Model
 const Question = require('../models/question');
+
+const auth = require('../middleware/auth');
+
 
 //Post at /api/questions to create questions
 //Typical request {optionA: "do one thing", option2:"do another", createdBy:"idofcreatoruser"}
-router.post('/', (req, res) => {
+router.post('/', auth, (req, res) => {
 
     const questionId = new mongoose.Types.ObjectId();
     const newQuestion = new Question({
@@ -42,6 +47,7 @@ router.get('/:id', (req, res) => {
     Question.findById(req.params.id, function (err, question) {
         if (err) {
             console.log(err);
+            res.status(400).send({message: "Something went wrong!"});
         } else {
             res.json(question);
         }
@@ -49,7 +55,7 @@ router.get('/:id', (req, res) => {
 });
 
 //Delete a question by id
-router.delete('/:id', (req, res) => {
+router.delete('/:id', auth, (req, res) => {
 
     Question.findByIdAndDelete(req.params.id, function (err, question) {
 
@@ -66,7 +72,7 @@ router.delete('/:id', (req, res) => {
 });
 
 //Vote on question
-router.post('/:id/vote', (req, res) => {
+router.post('/:id/vote', auth, (req, res) => {
 
     //Typical request
     // voteA - True means vote for A, false means vote for B
@@ -137,7 +143,7 @@ router.get('/:id/comments', (req, res) => {
 })
 
 //Create comment
-router.post('/:id/comments', (req, res) => {
+router.post('/:id/comments', auth, (req, res) => {
 
     //Typical request
     // {postedUser: "srhgsf", content "What a stupid question!"}
