@@ -5,8 +5,8 @@ let questionSchema = mongoose.Schema({
     optionB: { type: String, required: true},
     createdBy: mongoose.Schema.Types.ObjectId,
     dateCreated: {type:Date, required:true},
-    votesA: [mongoose.Schema.Types.ObjectId],
-    votesB: [mongoose.Schema.Types.ObjectId],
+    votesA: [String],
+    votesB: [String],
     comments: [mongoose.Schema.Types.ObjectId]
 });
 

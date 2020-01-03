@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 function auth(req, res, next) {
+    
     const token = req.header('x-auth-token');
 
     if (!token) {
@@ -18,6 +19,8 @@ function auth(req, res, next) {
         return res.status(400).send({ message: "Invalid token!" })
 
     }
+
+    console.log(req.user);
 
     next();
 }

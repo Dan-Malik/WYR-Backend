@@ -32,7 +32,6 @@ router.post('/', (req, res) => {
                     return res.status(400).send({ message: "Failed at password encryption" });
                 }
 
-                console.log(hash)
 
                 const newUser = new User({
                     _id: new mongoose.Types.ObjectId(),
@@ -47,20 +46,9 @@ router.post('/', (req, res) => {
                         console.log(err);
                         return res.status(400).send({ message: "Error creating new user." });
                     }
-                    
-                    jwt.sign({id: user.id}, process.env.JWT_SECRET, {expiresIn: 4800}, (err, token)=>{
-
-                        if (err) {
-                            console.log(err);
-                            return res.status(400).send({ message: "Error generating new token." });
-                        }
-
-                        console.log(`New user created: ${user.username}, ${user.email}`)
-                        res.status(200).json({ token, new_user: {id: user.id, username: user.username, email: user.email} });
-
-                    })
-
-                });
+                        console.log(`New user created: ${user.username}, ${user.email}`);
+                        res.status(200).json({new_user: {id: user.id, username: user.username, email: user.email} });
+                    });
 
             })
         });

@@ -13,20 +13,28 @@ let User = require('../models/user');
 //POST /api/auth to authenticate user
 router.post('/', (req, res) => {
 
+    //Check user credentials in db match those in request
+    // Typical request: {email: "dan@yahoo.com", password: "password"}
+
     if (!req.body.email || !req.body.password) {
         return res.status(400).send({ message: "Fields missing from user auth request!" });
     }
 
     User.findOne({ email: req.body.email }).then(user => {
 
+        console.log("email req:");
+        console.log(req.body.email);
 
         if (!user) {
+            console.log("User doesn't exist!");
             return res.status(400).send({ message: "Authentication request failed, user not found!." });
         }
+
 
         bcrypt.compare(req.body.password, user.password, function (err, compareResult) {
 
             if (!compareResult) {
+                console.log("Password incorrect!");                
                 return res.status(400).send({ message: "Authentication request failed, password does not match" })
             }
             
@@ -37,7 +45,7 @@ router.post('/', (req, res) => {
                 return res.status(400).send({ message: "Error generating new token." });
             }
 
-            console.log(`New user created: ${user.username}, ${user.email}`)
+            console.log(`New jwt created for ${user.username}, ${user.email}`)
             res.status(200).json({ token, new_user: { id: user.id, username: user.username, email: user.email } });
 
         })
