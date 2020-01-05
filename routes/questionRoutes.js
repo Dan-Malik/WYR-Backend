@@ -64,24 +64,21 @@ router.get('/:id', (req, res) => {
     Question.findById(req.params.id, function (err, question) {
         if (err) {
             console.log(err);
-            res.status(400).send({ message: "Something went wrong!" });
+            return res.status(400).send({ message: "Something went wrong!" });
         } else {
             
             Comment.find({ _id: { $in: question.comments } }, (err, comments) => {
                 console.log(`Comments retrieved from ${req.params.id}`);
             
                 return res.status(200).json({questionData: question, comments: comments});
-
             });
 
-
-            
         }
     })
 });
 
 //Get random question
-router.get('/random',(req,res)=>{
+router.get('/random/id',(req,res)=>{
       
         Question.aggregate([{ $sample: { size: 1 } }],
           function (err, result) {
@@ -90,6 +87,7 @@ router.get('/random',(req,res)=>{
                 res.status(400).send({ message: "Something went wrong!" });
     
             } else {
+                console.log(result);
                 res.status(200).json(result);
             }
           })
@@ -289,27 +287,40 @@ router.get('/:id/comment', (req, res) => {
 
 //Delete comment
 router.delete('/:id/comment/:commentid', (req,res)=>{
+    Comment.findByIdAndDelete({ _id: req.params.commentid }, (err,comment) => {
 
-    Comment.findById({ _id: req.params.commentid }, (err,comment) => {
         if (err) {
             console.log(err);
+
             return res.status(404);
         }
 
+        console.log(comment)
 
-    Question.findByIdAndUpdate({ _id: req.params.id }, (err, question) => {
-        question.comments = question.comments.filter(commentId => commentId!= comment._id)
+    Question.findOne({ _id: req.params.id }, (err, question) => {
+        if (err){
+
+
+            console.log(err);
+
+            return res.status(404);
+        
+        }
+
+        console.log("Question located")
+        question.comments = question.comments.filter(commentId => commentId!= req.params.commentid)
 
         question.save((err, doc) => {
             if (err) {
                 console.log(error);
             } else {
                 console.log(`Question ${doc._id} votes updated!`);
+                console.log(doc);
+                res.status(200).send({ comment})
             }
         })
 
     })
-
     })
 
 
@@ -342,7 +353,7 @@ router.post('/:id/comment', (req, res) => {
                 return res.status(404);
             }
             question.comments.push(comment._id);
-            question.save().then(res.status(200).send({ message: `New comment created: ${comment._id}` }));
+            question.save().then(res.status(200).send(comment));
         })
     });
 });
