@@ -9,6 +9,7 @@ const Comment = require('../models/comment');
 const auth = require('../middleware/auth');
 
 
+
 //Post at /api/questions to create questions
 //Typical request {optionA: "do one thing", option2:"do another", createdBy:"idofcreatoruser"}
 router.post('/', auth, (req, res) => {
@@ -19,6 +20,7 @@ router.post('/', auth, (req, res) => {
         optionA: req.body.optionA,
         optionB: req.body.optionB,
         createdBy: req.body.createdBy,
+        createdByUsername: req.body.createdByUsername,
         dateCreated: Date.now(),
         votesA: [],
         votesB: [],
@@ -27,7 +29,10 @@ router.post('/', auth, (req, res) => {
 
     newQuestion.save().then(() => {
         console.log("New question created!");
-        res.status(200).send({ message: `New question ${questionId} saved!` })
+        res.status(200).send({ questionId: questionId })
+    }).catch(err => {
+        console.log(err);
+
     });
 });
 
@@ -50,11 +55,7 @@ router.get('/:id/get', (req, res) => {
             console.log(err);
             res.status(400).send({ message: "Something went wrong!" });
         } else {
-
-
             res.status(200).json(question);
-
-            
         }
     })
 });
@@ -66,11 +67,11 @@ router.get('/:id', (req, res) => {
             console.log(err);
             return res.status(400).send({ message: "Something went wrong!" });
         } else {
-            
+
             Comment.find({ _id: { $in: question.comments } }, (err, comments) => {
                 console.log(`Comments retrieved from ${req.params.id}`);
-            
-                return res.status(200).json({questionData: question, comments: comments});
+
+                return res.status(200).json({ questionData: question, comments: comments });
             });
 
         }
@@ -78,22 +79,23 @@ router.get('/:id', (req, res) => {
 });
 
 //Get random question
-router.get('/random/id',(req,res)=>{
-      
-        Question.aggregate([{ $sample: { size: 1 } }],
-          function (err, result) {
-            if(err){
+router.get('/random/id', (req, res) => {
+
+    Question.aggregate([{ $sample: { size: 1 } }],
+        function (err, result) {
+            if (err) {
                 console.log(err);
                 res.status(400).send({ message: "Something went wrong!" });
-    
+
             } else {
                 console.log(result);
                 res.status(200).json(result);
             }
-          })
+        })
 
-        }
-      );
+}
+);
+
 
 
 //Development
@@ -117,11 +119,11 @@ router.delete('/:id', (req, res) => {
 router.post('/:id/vote', (req, res) => {
 
     //Typical request
-        // {userId: "blahblahblah", voteA:true, unvote: false}
+    // {userId: "blahblahblah", voteA:true, unvote: false}
     // voteA - True means vote for A, false means vote for B
     // if unvote is true, all user references removed from votes
     //For guest request:
-        // {voteA: true} or {voteA: false}
+    // {voteA: true} or {voteA: false}
 
     Question.findById(req.params.id, function (err, question) {
         if (err) {
@@ -172,23 +174,23 @@ router.post('/:id/vote', (req, res) => {
 
                 //If guest is voting
 
-                voteSessionObj = {questionId: req.params.id, voteA: req.body.voteA}
+                voteSessionObj = { questionId: req.params.id, voteA: req.body.voteA }
 
                 //If user session has no votes array
-                if(!req.session.votes){
-                    req.session.votes=[voteSessionObj];
+                if (!req.session.votes) {
+                    req.session.votes = [voteSessionObj];
 
-                    if(req.body.voteA){
+                    if (req.body.voteA) {
                         question.votesA.push(req.session.id);
                     } else {
                         question.votesB.push(req.session.id);
                     }
 
                     //If user session has votes, but none for this question
-                } else if(req.session.votes.filter(voteSessionObj => voteSessionObj.questionId === req.params.id).length === 0 ){
+                } else if (req.session.votes.filter(voteSessionObj => voteSessionObj.questionId === req.params.id).length === 0) {
                     req.session.votes.push(voteSessionObj);
 
-                    if(req.body.voteA){
+                    if (req.body.voteA) {
                         question.votesA.push(req.session.id);
                     } else {
                         question.votesB.push(req.session.id);
@@ -196,17 +198,17 @@ router.post('/:id/vote', (req, res) => {
 
                     //No unvoting for guests!
                 }
-                }
             }
-
-
-
-            question.save().then(() => {
-                console.log(`Votes updated for question ${req.params.id}`);
-                return res.status(200).json(question);
-            });
-
         }
+
+
+
+        question.save().then(() => {
+            console.log(`Votes updated for question ${req.params.id}`);
+            return res.status(200).json(question);
+        });
+
+    }
 
     );
 
@@ -286,8 +288,8 @@ router.get('/:id/comment', (req, res) => {
 })
 
 //Delete comment
-router.delete('/:id/comment/:commentid', (req,res)=>{
-    Comment.findByIdAndDelete({ _id: req.params.commentid }, (err,comment) => {
+router.delete('/:id/comment/:commentid', (req, res) => {
+    Comment.findByIdAndDelete({ _id: req.params.commentid }, (err, comment) => {
 
         if (err) {
             console.log(err);
@@ -297,30 +299,30 @@ router.delete('/:id/comment/:commentid', (req,res)=>{
 
         console.log(comment)
 
-    Question.findOne({ _id: req.params.id }, (err, question) => {
-        if (err){
-
-
-            console.log(err);
-
-            return res.status(404);
-        
-        }
-
-        console.log("Question located")
-        question.comments = question.comments.filter(commentId => commentId!= req.params.commentid)
-
-        question.save((err, doc) => {
+        Question.findOne({ _id: req.params.id }, (err, question) => {
             if (err) {
-                console.log(error);
-            } else {
-                console.log(`Question ${doc._id} votes updated!`);
-                console.log(doc);
-                res.status(200).send({ comment})
-            }
-        })
 
-    })
+
+                console.log(err);
+
+                return res.status(404);
+
+            }
+
+            console.log("Question located")
+            question.comments = question.comments.filter(commentId => commentId != req.params.commentid)
+
+            question.save((err, doc) => {
+                if (err) {
+                    console.log(error);
+                } else {
+                    console.log(`Question ${doc._id} votes updated!`);
+                    console.log(doc);
+                    res.status(200).send({ comment })
+                }
+            })
+
+        })
     })
 
 
@@ -357,6 +359,33 @@ router.post('/:id/comment', (req, res) => {
         })
     });
 });
+
+
+
+
+////////////////////
+//PAGINATION STUFF//
+
+//TASK:
+//RETURN n questions, for a paginated format, with page number and 
+//ordered on basis of size of vote arrays, or on size of comments, or on
+//basis of how recently posted
+
+
+//Attempt at ordering on basis of date and returning paginated
+// router.get('/pagerecent/:pagenumber', (req,res)=>{
+
+//     Question.aggregate();
+
+// })
+
+
+
+////////////////////
+
+
+
+
 
 
 module.exports = router;

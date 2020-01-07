@@ -4,6 +4,7 @@ let questionSchema = mongoose.Schema({
     optionA: { type: String, required: true},
     optionB: { type: String, required: true},
     createdBy: mongoose.Schema.Types.ObjectId,
+    createdByUsername: {type:String, required: true},
     dateCreated: {type:Date, required:true},
     votesA: [String],
     votesB: [String],
