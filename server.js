@@ -4,8 +4,9 @@ const moment = require('moment');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+
 const cookieParser = require('cookie-parser');
-const session = require('express-session');
+//const session = require('express-session');
 
 
 //Models
@@ -34,8 +35,9 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(session({secret: process.env.SESS_SECRET}));
+
+// app.use(cookieParser());
+//app.use(session({secret: process.env.SESS_SECRET}));
 
 
 db.once('open', () => console.log("MongoDB connection established!"));

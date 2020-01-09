@@ -8,8 +8,6 @@ const Comment = require('../models/comment');
 
 const auth = require('../middleware/auth');
 
-
-
 //Post at /api/questions to create questions
 //Typical request {optionA: "do one thing", option2:"do another", createdBy:"idofcreatoruser"}
 router.post('/', auth, (req, res) => {
@@ -116,14 +114,12 @@ router.delete('/:id', (req, res) => {
     });
 });
 
-router.post('/:id/vote', (req, res) => {
+router.post('/:id/vote', auth, (req, res) => {
 
     //Typical request
     // {userId: "blahblahblah", voteA:true, unvote: false}
     // voteA - True means vote for A, false means vote for B
     // if unvote is true, all user references removed from votes
-    //For guest request:
-    // {voteA: true} or {voteA: false}
 
     Question.findById(req.params.id, function (err, question) {
         if (err) {
@@ -172,32 +168,38 @@ router.post('/:id/vote', (req, res) => {
 
             } else {
 
+
+                //NEEDS REFACTORING WITH PERSISTENT COOKIES
+
                 //If guest is voting
+                
 
-                voteSessionObj = { questionId: req.params.id, voteA: req.body.voteA }
+                // voteSessionObj = { questionId: req.params.id, voteA: req.body.voteA }
 
-                //If user session has no votes array
-                if (!req.session.votes) {
-                    req.session.votes = [voteSessionObj];
+                // //If user session has no votes array
+                // if (!req.session.votes) {
+                //     req.session.votes = [voteSessionObj];
 
-                    if (req.body.voteA) {
-                        question.votesA.push(req.session.id);
-                    } else {
-                        question.votesB.push(req.session.id);
-                    }
+                //     if (req.body.voteA) {
+                //         question.votesA.push(req.session.id);
+                //     } else {
+                //         question.votesB.push(req.session.id);
+                //     }
 
-                    //If user session has votes, but none for this question
-                } else if (req.session.votes.filter(voteSessionObj => voteSessionObj.questionId === req.params.id).length === 0) {
-                    req.session.votes.push(voteSessionObj);
+                //     //If user session has votes, but none for this question
+                // } else if (req.session.votes.filter(voteSessionObj => voteSessionObj.questionId === req.params.id).length === 0) {
+                //     req.session.votes.push(voteSessionObj);
 
-                    if (req.body.voteA) {
-                        question.votesA.push(req.session.id);
-                    } else {
-                        question.votesB.push(req.session.id);
-                    }
+                //     if (req.body.voteA) {
+                //         question.votesA.push(req.session.id);
+                //     } else {
+                //         question.votesB.push(req.session.id);
+                //     }
 
                     //No unvoting for guests!
-                }
+//                }
+
+
             }
         }
 
@@ -213,67 +215,6 @@ router.post('/:id/vote', (req, res) => {
     );
 
 });
-
-
-
-//Vote on question
-// router.post('/:id/vote', auth, (req, res) => {
-
-//     //Typical request
-//     // voteA - True means vote for A, false means vote for B
-//     // if unvote is true, all user references removed from votes
-//     // {userId: "blahblahblah", voteA:true, unvote: false}
-
-//     Question.find(req.params.id, function (err, question) {
-//         if (err) {
-//             console.log(`Failed to vote on question ${req.params.id}`);
-//             console.log(err);
-//             return res.status(404).send({ message: `Failed to vote on question ${req.params.id}` });
-//         } else {
-
-//             if (!unvote) {
-
-//                 if (question.votesA.includes(req.body.userId)) {
-
-//                     if (!voteA) {
-//                         question.votesA = question.votesA.filter((userId) => { userId != req.body.userId })
-//                         question.votesB.push(req.body.userId)
-//                     }
-
-//                 } else if (question.votesB.includes(req.body.userId)) {
-
-//                     if (voteA) {
-//                         question.votesB = question.votesA.filter((userId) => { userId != req.body.userId })
-//                         question.votesA.push(req.body.userId)
-//                     }
-
-//                 } else {
-
-//                     if (voteA) {
-//                         question.votesA.push(req.body.userId)
-//                     } else if (!voteA) {
-//                         question.votesB.push(req.body.userId)
-//                     }
-
-//                 }
-
-//             } else {
-
-//                 question.votesA = question.votesA.filter((userId) => { userId != req.body.userId })
-//                 question.votesB = question.votesA.filter((userId) => { userId != req.body.userId })
-
-//             }
-
-//             question.save().then(() => {
-//                 console.log(`Votes updated for question ${req.params.id}`);
-//                 return res.status(200).send({ message: `Votes updated for question ${req.params.id}` });
-//             });
-
-//         }
-
-//     });
-
-// });
 
 //Get comments from question
 router.get('/:id/comment', (req, res) => {
@@ -297,7 +238,7 @@ router.delete('/:id/comment/:commentid', (req, res) => {
             return res.status(404);
         }
 
-        console.log(comment)
+        console.log(comment);
 
         Question.findOne({ _id: req.params.id }, (err, question) => {
             if (err) {
@@ -329,10 +270,11 @@ router.delete('/:id/comment/:commentid', (req, res) => {
 })
 
 //Create comment
-router.post('/:id/comment', (req, res) => {
+router.post('/:id/comment',auth, (req, res) => {
 
     //Typical request
     // {postedUser: "0x624tydvqeq34yq35uq35", postedUserName:"John Doe" content "What a stupid question!"}
+
 
     const newComment = new Comment({
         _id: new mongoose.Types.ObjectId(),
@@ -360,6 +302,10 @@ router.post('/:id/comment', (req, res) => {
     });
 });
 
+//////////////////////////////
+//EXPERIMENTAL COOKIE ROUTES//
+//////////////////////////////
+
 
 
 
@@ -382,6 +328,8 @@ router.post('/:id/comment', (req, res) => {
 
 
 ////////////////////
+
+
 
 
 
