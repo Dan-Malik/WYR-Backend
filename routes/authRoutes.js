@@ -9,7 +9,7 @@ let User = require('../models/user');
 
 
 
-//POST /api/auth to authenticate user
+//POST /api/auth to auth user
 router.post('/', (req, res) => {
 
     //Check user credentials in db match those in request
@@ -34,7 +34,7 @@ router.post('/', (req, res) => {
 
             if (!compareResult) {
                 console.log("Password incorrect!");                
-                return res.status(400).send({ message: "Authentication request failed, password does not match" })
+                return res.status(401).send({ message: "Authentication request failed, password does not match" })
             }
             
             jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: 4800 }, (err, token) => {
@@ -46,7 +46,6 @@ router.post('/', (req, res) => {
 
             console.log(`New jwt created for ${user.username}, ${user.email}`)
             res.status(200).json({ token, new_user: { id: user.id, username: user.username, email: user.email } });
-
         })
     })
     })
